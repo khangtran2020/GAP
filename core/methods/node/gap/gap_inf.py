@@ -79,22 +79,27 @@ class GAP (NodeClassification):
         self._encoder.reset_parameters()
         super().reset_parameters()
 
-    def fit(self, data: Data, prefix: str = '') -> Metrics:
-        self.data = data.to(self.device, non_blocking=True)
+    def fit(self, tr_data: Data, va_data: Data, te_data: Data, prefix: str = '') -> Metrics:
+        self.tr_data = tr_data.to(self.device, non_blocking=True)
+        self.va_data = va_data.to(self.device, non_blocking=True)
+        self.te_data = te_data.to(self.device, non_blocking=True)
         
         # pre-train encoder
         if self.encoder_layers > 0:
-            self.data = self.pretrain_encoder(self.data, prefix=prefix)
+            self.tr_data, self.va_data, self.te_data = self.pretrain_encoder(tr_data=self.tr_data, va_data=self.va_data,
+                                                                             te_data=self.te_data, prefix=prefix)
 
         # compute aggregations
-        self.data = self.compute_aggregations(self.data)
+        self.tr_data = self.compute_aggregations(self.tr_data)
+        self.va_data = self.compute_aggregations(self.va_data)
+        self.te_data = self.compute_aggregations(self.te_data)
 
         # train classifier
-        return super().fit(self.data, prefix=prefix)
+        return super().fit(tr_data=self.tr_data, va_data=self.va_data, te_data=self.te_data, prefix=prefix)
 
     def test(self, data: Optional[Data] = None, prefix: str = '') -> Metrics:
-        if data is None or data == self.data:
-            data = self.data
+        if data is None or data == self.te_data:
+            data = self.te_data
         else:
             data = data.to(self.device, non_blocking=True)
             data.x = self._encoder.predict(data)
@@ -117,7 +122,7 @@ class GAP (NodeClassification):
     def _normalize(self, x: torch.Tensor) -> torch.Tensor:
         return F.normalize(x, p=2, dim=-1)
 
-    def pretrain_encoder(self, data: Data, prefix: str) -> Data:
+    def pretrain_encoder(self, tr_data, va_data, te_data, prefix: str):
         console.info('pretraining encoder')
         self._encoder.to(self.device)
         
@@ -125,16 +130,18 @@ class GAP (NodeClassification):
             model=self._encoder,
             epochs=self.encoder_epochs,
             optimizer=self.configure_encoder_optimizer(), 
-            train_dataloader=self.data_loader(data, 'train'), 
-            val_dataloader=self.data_loader(data, 'val'),
+            train_dataloader=self.data_loader(tr_data, 'train'),
+            val_dataloader=self.data_loader(va_data, 'val'),
             test_dataloader=None,
             checkpoint=True,
             prefix=f'{prefix}encoder/',
         )
 
         self.trainer.reset()
-        data.x = self._encoder.predict(data)
-        return data
+        tr_data.x = self._encoder.predict(tr_data)
+        va_data.x = self._encoder.predict(va_data)
+        te_data.x = self._encoder.predict(te_data)
+        return tr_data, va_data, te_data
 
     def compute_aggregations(self, data: Data) -> Data:
         with console.status('computing aggregations'):

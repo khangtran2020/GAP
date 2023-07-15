@@ -10,9 +10,11 @@ from core.args.utils import ArgInfo
 from core.data.transforms import FilterClassByCount
 from core.data.transforms import RemoveSelfLoops
 from core.data.transforms import RemoveIsolatedNodes
+from core.data.transforms import TrainTestSplit
 from core.datasets import Facebook
 from core.datasets import Amazon
 from core.utils import dict2table
+from rich import print as rprint
 
 
 class DatasetLoader:
@@ -45,17 +47,20 @@ class DatasetLoader:
         self.name = dataset
         self.data_dir = data_dir
 
-    def load(self, verbose=False) -> Data:
+    def load(self, verbose=False):
         data = self.supported_datasets[self.name](root=os.path.join(self.data_dir, self.name))[0]
-        data = Compose([RemoveSelfLoops(), RemoveIsolatedNodes(), ToSparseTensor()])(data)
+        tr_data, va_data, te_data = Compose([RemoveSelfLoops(), RemoveIsolatedNodes(), TrainTestSplit()])(data)
+        tr_data = Compose([ToSparseTensor()])(tr_data)
+        va_data = Compose([ToSparseTensor()])(va_data)
+        te_data = Compose([ToSparseTensor()])(te_data)
+
 
         if verbose:
-            self.print_stats(data)
+            self.print_stats(data, tr_data, va_data, te_data)
+        return tr_data, va_data, te_data
 
-        return data
-
-    def print_stats(self, data: Data):
-        nodes_degree: torch.Tensor = data.adj_t.sum(dim=1)
+    def print_stats(self, data: Data, tr_data, va_data, te_data):
+        nodes_degree: torch.Tensor = tr_data.adj_t.sum(dim=1)
         baseline: float = (data.y[data.test_mask].unique(return_counts=True)[1].max().item() * 100 / data.test_mask.sum().item())
         train_ratio: float = data.train_mask.sum().item() / data.num_nodes * 100
         val_ratio: float = data.val_mask.sum().item() / data.num_nodes * 100
@@ -63,7 +68,7 @@ class DatasetLoader:
 
         stat = {
             'nodes': f'{data.num_nodes:,}',
-            'edges': f'{data.num_edges:,}',
+            'edges': f'{tr_data.num_edges + va_data.num_edges + te_data.num_edges:,}',
             'features': f'{data.num_features:,}',
             'classes': f'{int(data.y.max() + 1)}',
             'mean degree': f'{nodes_degree.mean():.2f}',

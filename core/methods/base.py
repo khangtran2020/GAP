@@ -8,7 +8,7 @@ from core.modules.base import Metrics
 class MethodBase(ABC):
 
     @abstractmethod
-    def fit(self, data: Data, prefix: str = '') -> Metrics:
+    def fit(self, tr_data: Data, va_data: Data, te_data:Data, prefix: str = '') -> Metrics:
         """Fit the model to the given data."""
 
     @abstractmethod

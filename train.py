@@ -14,6 +14,7 @@ with console.status('importing modules'):
     from core.methods.node import supported_methods, NodeClassification
     from core.utils import seed_everything, confidence_interval
     from torch_geometric.data import Data
+    from rich import print as rprint
 
 
 def run(seed:    Annotated[int,   ArgInfo(help='initial random seed')] = 12345,
@@ -31,9 +32,9 @@ def run(seed:    Annotated[int,   ArgInfo(help='initial random seed')] = 12345,
 
     with console.status('loading dataset'):
         loader_args = strip_kwargs(DatasetLoader, kwargs)
-        data_initial = DatasetLoader(**loader_args).load(verbose=True)
+        tr_data, va_data, te_data = DatasetLoader(**loader_args).load(verbose=True)
 
-    num_classes = data_initial.y.max().item() + 1
+    num_classes = tr_data.y.max().item() + 1
     config = dict(**kwargs, seed=seed, repeats=repeats)
     logger_args = strip_kwargs(Logger.setup, kwargs)
     logger = Logger.setup(enabled=False, config=config, **logger_args)
@@ -48,8 +49,10 @@ def run(seed:    Annotated[int,   ArgInfo(help='initial random seed')] = 12345,
     ### run experiment ###
     for iteration in range(repeats):
         start_time = time()
-        data = Data(**data_initial.to_dict())
-        metrics = method.fit(data)
+        tr_data = Data(**tr_data.to_dict())
+        va_data = Data(**va_data.to_dict())
+        te_data = Data(**te_data.to_dict())
+        metrics = method.fit(tr_data=tr_data, va_data=va_data, te_data=te_data)
         end_time = time()
         metrics['duration'] = end_time - start_time
 

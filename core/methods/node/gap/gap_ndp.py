@@ -79,14 +79,14 @@ class NodePrivGAP (GAP):
         self._encoder = self.encoder_noisy_sgd.prepare_module(self._encoder)
         self._classifier = self.classifier_noisy_sgd.prepare_module(self._classifier)
 
-    def fit(self, data: Data, prefix: str = '') -> Metrics:
-        num_train_nodes = data.train_mask.sum().item()
+    def fit(self, tr_data: Data, va_data: Data, te_data: Data, prefix: str = '') -> Metrics:
+        num_train_nodes = tr_data.train_mask.sum().item()
 
         if num_train_nodes != self.num_train_nodes:
             self.num_train_nodes = num_train_nodes
             self.calibrate()
 
-        return super().fit(data, prefix=prefix)
+        return super().fit(tr_data, va_data, te_data, prefix=prefix)
 
     def compute_aggregations(self, data: Data) -> Data:
         with console.status('bounding the number of neighbors per node'):

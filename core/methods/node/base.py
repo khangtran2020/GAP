@@ -53,17 +53,21 @@ class NodeClassification(MethodBase):
         self.trainer.reset()
         self.data = None
 
-    def fit(self, data: Data, prefix: str = '') -> Metrics:
+    def fit(self, tr_data: Data, va_data: Data, te_data: Data, prefix: str = '') -> Metrics:
         """Fit the model to the given data."""
-        self.data = data.to(self.device, non_blocking=True)
-        train_metrics = self._train(self.data, prefix=prefix)
-        test_metrics = self.test(self.data, prefix=prefix)
+        self.tr_data = tr_data.to(self.device, non_blocking=True)
+        self.va_data = va_data.to(self.device, non_blocking=True)
+        self.te_data = te_data.to(self.device, non_blocking=True)
+
+        train_metrics = self._train(tr_data=self.tr_data, va_data=self.va_data, te_data=self.te_data, prefix=prefix)
+        test_metrics = self.test(data=self.te_data, prefix=prefix)
         return {**train_metrics, **test_metrics}
 
     def test(self, data: Optional[Data] = None, prefix: str = '') -> Metrics:
         """Predict the labels for the given data, or the training data if data is None."""
         if data is None:
-            data = self.data
+            print("Feed data for testing")
+            a = 1/0
         
         data = data.to(self.device, non_blocking=True)
 
@@ -77,12 +81,13 @@ class NodeClassification(MethodBase):
     def predict(self, data: Optional[Data] = None) -> Tensor:
         """Predict the labels for the given data, or the training data if data is None."""
         if data is None:
-            data = self.data
+            print("Feed data for predicting")
+            a = 1 / 0
 
         data = data.to(self.device, non_blocking=True)
         return self.classifier.predict(data)
 
-    def _train(self, data: Data, prefix: str = '') -> Metrics:
+    def _train(self, tr_data: Data, va_data: Data, te_data: Data, prefix: str = '') -> Metrics:
         console.info('training classifier')
         self.classifier.to(self.device)
 
@@ -90,9 +95,9 @@ class NodeClassification(MethodBase):
             model=self.classifier,
             epochs=self.epochs,
             optimizer=self.configure_optimizer(),
-            train_dataloader=self.data_loader(data, 'train'), 
-            val_dataloader=self.data_loader(data, 'val'),
-            test_dataloader=self.data_loader(data, 'test') if globals['debug'] else None,
+            train_dataloader=self.data_loader(tr_data, 'train'),
+            val_dataloader=self.data_loader(va_data, 'val'),
+            test_dataloader=self.data_loader(te_data, 'test') if globals['debug'] else None,
             checkpoint=True,
             prefix=prefix,
         )

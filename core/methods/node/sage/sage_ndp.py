@@ -85,15 +85,15 @@ class NodePrivSAGE (SAGE):
             data = BoundDegree(self.max_degree)(data)
         return data
 
-    def fit(self, data: Data, prefix: str = '') -> Metrics:
-        num_train_nodes = data.train_mask.sum().item()
+    def fit(self, tr_data: Data, va_data: Data, te_data: Data, prefix: str = '') -> Metrics:
+        num_train_nodes = tr_data.train_mask.sum().item()
 
         if num_train_nodes != self.num_train_nodes:
             self.num_train_nodes = num_train_nodes
             self.calibrate()
 
-        data = self.sample_neighbors(data)
-        return super().fit(data, prefix=prefix)
+        tr_data = self.sample_neighbors(tr_data)
+        return super().fit(tr_data=tr_data, va_data=va_data, te_data=te_data, prefix=prefix)
 
     def test(self, data: Optional[Data] = None, prefix: str = '') -> Metrics:
         if data is not None and data != self.data:
