@@ -28,7 +28,7 @@ class DatasetLoader:
         'amazon': partial(Amazon, 
             transform=Compose([
                 RandomNodeSplit(num_val=0.1, num_test=0.15), 
-                FilterClassByCount(min_count=100000, remove_unlabeled=True)
+                FilterClassByCount(min_count=6000, remove_unlabeled=True)
             ])
         ),
         'facebook': partial(Facebook, name='UIllinois20', target='year', 
