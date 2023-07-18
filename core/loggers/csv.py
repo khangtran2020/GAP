@@ -14,6 +14,10 @@ class CSVLogger(LoggerBase):
     @if_enabled
     def log(self, metrics: dict[str, object]):
         self.experiment.update(metrics)
+        log_dir = os.path.join(self.output_dir, 'csv', self.project)
+        os.makedirs(log_dir, exist_ok=True)
+        df = pd.DataFrame(self.experiment, index=[0])
+        df.to_csv(os.path.join(log_dir, f'{self.experiment_id}.csv'), index=False)
 
     @if_enabled
     def log_summary(self, metrics: dict[str, object]):
