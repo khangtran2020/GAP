@@ -11,6 +11,7 @@ from core.methods.base import MethodBase
 from core.modules.base import TrainableModule, Metrics, Stage
 from core import console
 from core.trainer import Trainer
+from rich import print as rprint
 
 
 class NodeClassification(MethodBase):
@@ -60,6 +61,7 @@ class NodeClassification(MethodBase):
         self.te_data = te_data.to(self.device, non_blocking=True)
 
         train_metrics = self._train(tr_data=self.tr_data, va_data=self.va_data, te_data=self.te_data, prefix=prefix)
+        rprint("Train metric:", train_metrics)
         test_metrics = self.test(data=self.te_data, prefix=prefix)
         return {**train_metrics, **test_metrics}
 
