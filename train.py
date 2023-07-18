@@ -53,6 +53,7 @@ def run(seed:    Annotated[int,   ArgInfo(help='initial random seed')] = 12345,
         va_data = Data(**va_data.to_dict())
         te_data = Data(**te_data.to_dict())
         metrics = method.fit(tr_data=tr_data, va_data=va_data, te_data=te_data)
+        rprint(f"Metrics: {metrics}")
         end_time = time()
         metrics['duration'] = end_time - start_time
 
