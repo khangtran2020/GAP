@@ -38,6 +38,7 @@ def run(seed:    Annotated[int,   ArgInfo(help='initial random seed')] = 12345,
     config = dict(**kwargs, seed=seed, repeats=repeats)
     logger_args = strip_kwargs(Logger.setup, kwargs)
     logger = Logger.setup(enabled=False, config=config, **logger_args)
+    logger.experiment_id = f"dataset_{kwargs['dataset']}_method_{kwargs['method']}_eps_{kwargs['epsilon']}"
 
     ### initiallize method ###
     Method = supported_methods[kwargs['method']]
