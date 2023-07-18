@@ -118,14 +118,14 @@ class NodeClassification(MethodBase):
 
     def data_loader(self, data: Data, stage: Stage) -> NodeDataLoader:
         """Return a dataloader for the given stage."""
-        
+        drop = True if stage == 'train' else False
         batch_size = 'full' if (stage != 'train' and self.full_batch_eval) else self.batch_size
         dataloader = NodeDataLoader(
             data=data, 
             stage=stage,
             batch_size=batch_size, 
             shuffle=(stage == 'train'), 
-            drop_last=True,
+            drop_last=drop,
             poisson_sampling=False,
         )
 
