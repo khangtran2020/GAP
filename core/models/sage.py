@@ -2,7 +2,7 @@ from typing import Callable
 import torch
 from torch import Tensor
 from torch.nn import Dropout, BatchNorm1d
-from torch_geometric.nn import GraphSAGE
+from torch_geometric.nn.models import GraphSAGE
 from torch_sparse import SparseTensor
 
 
