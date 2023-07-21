@@ -27,7 +27,7 @@ class DatasetLoader:
         ),
         'amazon': partial(Amazon, 
             transform=Compose([
-                RandomNodeSplit(num_val=0.1, num_test=0.15), 
+                # RandomNodeSplit(num_val=0.1, num_test=0.15),
                 FilterClassByCount(min_count=6000, remove_unlabeled=True)
             ])
         ),
